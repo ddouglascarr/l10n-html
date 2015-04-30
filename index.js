@@ -10,10 +10,10 @@
  */
 
 var defaults = require('lodash.defaults');
-var cheerio  = require('cheerio');
+var $  = require('cheerio');
 var selectn  = require('selectn');
 
-var re = /<[a-zA-Z]+ [^>]*data-l10n=/;
+var re = /<[a-zA-Z]+[^>]+data-l10n=[^>]*>[^<]*<\/[^>]+>/;
 
 module.exports = function (source, bundle, opts) {
     if (opts === undefined) opts = {};
@@ -23,26 +23,32 @@ module.exports = function (source, bundle, opts) {
     });
 
     var out = translate('', source);
-    if (opts.returnCheerio) return cheerio.load(out);
+    if (opts.returnCheerio) return $.load(out);
     return out;
 
 
     function translate(_head, _tail) {
-        var idx = _tail.search(re);
-        if(idx < 0) {
+        console.log('_head: ' + _head);
+        console.log('_tail: ' + _tail);
+        var result = re.exec(_tail)
+        console.log(result);
+        if(result === null) {
             return _head.concat(_tail);
         }
         
-        var head = _head.concat(_tail.slice(0, idx));
-        var tail = _tail.slice(idx);
-        var $ = cheerio.load(tail);
+        var start = result.index;
+        var len = result[0].length;
+        var end = start + len;
 
-        var $tag = $('[data-l10n]').first().remove();
+        var head = _head.concat(_tail.slice(0, start));
+        var tail = _tail.slice(end);
+        var $tag = $(_tail.slice(start, end));
+
         var key = $tag.attr('data-l10n');
         $tag.html(selectn(key, bundle));
         if (opts.stripDataAttributes) $tag.removeAttr('data-l10n');
 
-        return translate(head.concat(cheerio.html($tag)), $.html());
+        return translate(head.concat($.html($tag)), tail);
     }
 
 };
