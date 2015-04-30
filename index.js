@@ -28,10 +28,7 @@ module.exports = function (source, bundle, opts) {
 
 
     function translate(_head, _tail) {
-        console.log('_head: ' + _head);
-        console.log('_tail: ' + _tail);
         var result = re.exec(_tail)
-        console.log(result);
         if(result === null) {
             return _head.concat(_tail);
         }
